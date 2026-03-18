@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab Guide Viewer | Or Ben Ari</title>
+  <meta name="description" content="Rendered lab guide viewer for Or Ben Ari's cybersecurity portfolio and cyber course project library." />
+  <meta name="theme-color" content="#07111b" />
+  <style>
+    :root {
+      --bg: #07111b;
+      --bg-soft: #0c1724;
+      --panel: rgba(11, 21, 33, 0.95);
+      --panel-2: rgba(8, 16, 28, 0.96);
+      --line: rgba(142, 255, 198, 0.12);
+      --line-strong: rgba(142, 255, 198, 0.22);
+      --text: #eef6ff;
+      --muted: #92a7bc;
+      --soft: #c2d0df;
+      --accent: #8effc6;
+      --accent-2: #67d6ff;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+      --radius: 28px;
+      --radius-sm: 18px;
+      --max: 1080px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--text);
+      line-height: 1.7;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(142,255,198,0.08), transparent 22%),
+        radial-gradient(circle at 82% 12%, rgba(103,214,255,0.09), transparent 26%),
+        radial-gradient(circle at 50% 100%, rgba(103,214,255,0.05), transparent 30%),
+        linear-gradient(180deg, #060f18 0%, #08111c 35%, #07111b 100%);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background-image:
+        linear-gradient(rgba(142,255,198,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(142,255,198,0.04) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.12));
+      opacity: 0.48;
+    }
+
+    a { color: inherit; }
+
+    .wrap {
+      width: min(calc(100% - 2rem), var(--max));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(16px);
+      background: rgba(7, 14, 23, 0.78);
+      border-bottom: 1px solid rgba(142,255,198,0.09);
+    }
+
+    .topbar-inner {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.9rem 0;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.85rem;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(142,255,198,0.18), rgba(103,214,255,0.15));
+      border: 1px solid rgba(142,255,198,0.16);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 30px rgba(0,0,0,0.24);
+    }
+
+    .brand-mark svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .brand-copy { display: grid; gap: 0.08rem; }
+    .brand-copy strong { font-size: 1rem; letter-spacing: 0.08em; }
+    .brand-copy span { color: var(--muted); font-size: 0.82rem; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.7rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      padding: 0.86rem 1.05rem;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(142,255,198,0.18), rgba(103,214,255,0.14));
+      border-color: rgba(142,255,198,0.18);
+      color: var(--text);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.03);
+      border-color: rgba(255,255,255,0.08);
+      color: var(--soft);
+    }
+
+    main {
+      padding: 2rem 0 3rem;
+    }
+
+    .hero {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero-card,
+    .doc-shell {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      padding: 1.4rem;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 0.55rem;
+      border-radius: 999px;
+      padding: 0.42rem 0.82rem;
+      background: rgba(142,255,198,0.07);
+      border: 1px solid rgba(142,255,198,0.16);
+      color: #dcfff1;
+      font-size: 0.9rem;
+    }
+
+    h1 {
+      margin: 0.85rem 0 0.45rem;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1.05;
+      letter-spacing: -0.05em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--soft);
+      max-width: 68ch;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .doc-shell {
+      overflow: hidden;
+    }
+
+    .doc-state {
+      padding: 1.2rem 1.35rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      color: var(--muted);
+    }
+
+    .doc {
+      padding: 1.4rem;
+    }
+
+    .doc[dir="rtl"] {
+      text-align: right;
+    }
+
+    .doc h1,
+    .doc h2,
+    .doc h3,
+    .doc h4,
+    .doc h5,
+    .doc h6 {
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      margin: 1.5rem 0 0.7rem;
+      scroll-margin-top: 100px;
+    }
+
+    .doc h1:first-child,
+    .doc h2:first-child,
+    .doc h3:first-child {
+      margin-top: 0;
+    }
+
+    .doc h1 { font-size: clamp(1.8rem, 3vw, 2.5rem); }
+    .doc h2 { font-size: clamp(1.45rem, 2.6vw, 1.9rem); }
+    .doc h3 { font-size: clamp(1.15rem, 2.2vw, 1.4rem); }
+    .doc p,
+    .doc li,
+    .doc blockquote {
+      color: var(--soft);
+      font-size: 1rem;
+    }
+
+    .doc ul,
+    .doc ol {
+      padding-inline-start: 1.3rem;
+    }
+
+    .doc li + li {
+      margin-top: 0.35rem;
+    }
+
+    .doc hr {
+      border: 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      margin: 1.8rem 0;
+    }
+
+    .doc a {
+      color: var(--accent-2);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+
+    .doc img {
+      max-width: 100%;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: block;
+      margin: 1rem 0;
+    }
+
+    .doc blockquote {
+      margin: 1rem 0;
+      padding: 0.85rem 1rem;
+      border-inline-start: 3px solid rgba(103,214,255,0.7);
+      background: rgba(255,255,255,0.03);
+      border-radius: 0 14px 14px 0;
+    }
+
+    .doc table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      overflow: hidden;
+      border-radius: 16px;
+      display: block;
+      overflow-x: auto;
+    }
+
+    .doc thead {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .doc th,
+    .doc td {
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 0.75rem 0.9rem;
+      text-align: left;
+      vertical-align: top;
+      min-width: 120px;
+    }
+
+    .doc[dir="rtl"] th,
+    .doc[dir="rtl"] td {
+      text-align: right;
+    }
+
+    .doc pre,
+    .doc code,
+    .doc samp,
+    .doc kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      direction: ltr;
+      unicode-bidi: embed;
+    }
+
+    .doc code {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 0.12rem 0.38rem;
+      font-size: 0.92em;
+      color: #dff7ff;
+    }
+
+    .doc pre {
+      padding: 1rem;
+      background: #06101a;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      overflow: auto;
+      box-shadow: inset 0 0 0 1px rgba(142,255,198,0.04);
+    }
+
+    .doc pre code {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      display: block;
+      white-space: pre;
+    }
+
+    .doc details {
+      margin: 1rem 0;
+      padding: 0.8rem 0.95rem;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .doc summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc .task-list-item {
+      list-style: none;
+    }
+
+    .doc .task-list-item input {
+      margin-inline-end: 0.55rem;
+    }
+
+    .empty-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .lab-card {
+      padding: 1.1rem;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(13, 23, 36, 0.94), rgba(8, 16, 27, 0.95));
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .lab-card h3 {
+      margin-top: 0;
+      margin-bottom: 0.35rem;
+      font-size: 1.08rem;
+    }
+
+    .lab-card p {
+      margin-top: 0;
+      color: var(--soft);
+    }
+
+    .error {
+      color: #ffd7d7;
+      background: rgba(255, 142, 142, 0.08);
+      border: 1px solid rgba(255, 142, 142, 0.18);
+      border-radius: 18px;
+      padding: 1rem;
+    }
+
+    @media (max-width: 760px) {
+      .wrap { width: min(calc(100% - 1rem), var(--max)); }
+      .topbar-inner { flex-direction: column; align-items: flex-start; }
+      .actions { justify-content: flex-start; }
+      .hero-card,
+      .doc { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="index.html#projects" aria-label="Back to portfolio projects">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L18.5 5V11.2C18.5 15.3 15.8 19.1 12 20.5C8.2 19.1 5.5 15.3 5.5 11.2V5L12 2Z" stroke="url(#g)" stroke-width="1.4"/>
+            <path d="M13.2 6.7L9.4 12.2H12.1L10.8 17.2L14.9 11.3H12.1L13.2 6.7Z" fill="url(#g)"/>
+            <defs>
+              <linearGradient id="g" x1="5" y1="2" x2="19" y2="21" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#8effc6"/>
+                <stop offset="1" stop-color="#67d6ff"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </span>
+        <span class="brand-copy">
+          <strong>Or Ben Ari</strong>
+          <span>Lab guide viewer</span>
+        </span>
+      </a>
+      <div class="actions">
+        <a class="btn btn-secondary" id="backLink" href="index.html#projects">Back to portfolio</a>
+        <a class="btn btn-primary" id="sourceLink" href="#" target="_blank" rel="noreferrer">Open raw Markdown</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <section class="hero">
+        <div class="hero-card">
+          <div class="eyebrow">Rendered documentation</div>
+          <h1 id="pageTitle">Cyber course lab guide</h1>
+          <p id="pageSummary">This viewer renders the Markdown lab files in a cleaner page layout so the documentation is readable on GitHub Pages instead of opening as raw Markdown text.</p>
+          <div class="meta-row">
+            <span class="pill" id="filePill">Source file: —</span>
+            <span class="pill" id="modePill">Mode: Markdown → HTML</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-shell">
+        <div class="doc-state" id="docState">Loading document…</div>
+        <article class="doc" id="doc"></article>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const LABS = {
+      "CHEETSHEET-NETWORKING-EXAM.md": {
+        title: "Networking Enterprise Lab",
+        summary: "Multi-site networking lab with VLAN segmentation, inter-VLAN routing, OSPF, NAT, DHCP relay, STP, and connectivity validation.",
+      },
+      "RunBook - System - DONE.md": {
+        title: "Windows Server & Active Directory Runbook",
+        summary: "Windows Server and AD lab guide covering domain setup, replication, OU design, DNS, DHCP, GPO, permissions, and backup tasks.",
+      },
+      "Linux Essentials – Flashcards - CheetSheet.md": {
+        title: "Linux Essentials Flashcards",
+        summary: "Fast-review Linux study guide with command-line notes, exam prep cues, and short explanations.",
+      },
+      "Exam Theory Answers.md": {
+        title: "Cyber Theory Study Guide",
+        summary: "Compact theory reference covering recon, scanning, exploitation concepts, malware analysis, and web security topics.",
+      },
+      "Exam Simulator EN.md": {
+        title: "Practical Exam Simulator",
+        summary: "Scenario-based practice guide with hints and full answers for AD, Nmap, Wireshark, Hydra, log analysis, and malware research.",
+      }
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const requestedFile = params.get('file');
+    const requestedTitle = params.get('title');
+    const docEl = document.getElementById('doc');
+    const stateEl = document.getElementById('docState');
+    const titleEl = document.getElementById('pageTitle');
+    const summaryEl = document.getElementById('pageSummary');
+    const filePill = document.getElementById('filePill');
+    const sourceLink = document.getElementById('sourceLink');
+
+    marked.setOptions({
+      gfm: true,
+      breaks: false,
+      headerIds: true,
+      mangle: false
+    });
+
+    function safeText(value) {
+      return String(value || '').replace(/[<>]/g, '');
+    }
+
+    function inferDirection(markdown) {
+      const hebrewCount = (markdown.match(/[֐-׿]/g) || []).length;
+      const latinCount = (markdown.match(/[A-Za-z]/g) || []).length;
+      return hebrewCount > Math.max(60, latinCount * 0.16) ? 'rtl' : 'ltr';
+    }
+
+    function decorateRenderedContent() {
+      docEl.querySelectorAll('a').forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('http://') || href.startsWith('https://')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noreferrer');
+        }
+      });
+    }
+
+    function renderLabDirectory() {
+      titleEl.textContent = 'Cyber course lab library';
+      summaryEl.textContent = 'Choose a lab guide to open it in a readable documentation view instead of the raw .md file.';
+      filePill.textContent = 'Source file: select a lab';
+      sourceLink.style.display = 'none';
+      stateEl.textContent = 'Available rendered lab guides';
+
+      const cards = Object.entries(LABS).map(([file, meta]) => {
+        const href = `lab-viewer.html?file=${encodeURIComponent(file)}&title=${encodeURIComponent(meta.title)}`;
+        return `
+          <article class="lab-card">
+            <h3>${safeText(meta.title)}</h3>
+            <p>${safeText(meta.summary)}</p>
+            <a class="btn btn-primary" href="${href}">Open lab guide</a>
+          </article>
+        `;
+      }).join('');
+
+      docEl.removeAttribute('dir');
+      docEl.innerHTML = `<div class="empty-grid">${cards}</div>`;
+    }
+
+    async function loadMarkdown(file) {
+      if (!(file in LABS)) {
+        renderLabDirectory();
+        return;
+      }
+
+      const meta = LABS[file];
+      const title = requestedTitle || meta.title;
+      titleEl.textContent = title;
+      summaryEl.textContent = meta.summary;
+      filePill.textContent = `Source file: ${file}`;
+      sourceLink.href = encodeURI(file);
+      sourceLink.style.display = 'inline-flex';
+
+      try {
+        const response = await fetch(encodeURI(file), { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const markdown = await response.text();
+        const dir = inferDirection(markdown);
+        docEl.setAttribute('dir', dir);
+        docEl.innerHTML = marked.parse(markdown);
+        decorateRenderedContent();
+        stateEl.textContent = `Rendered view · ${dir === 'rtl' ? 'RTL-aware layout' : 'LTR layout'}`;
+      } catch (error) {
+        docEl.removeAttribute('dir');
+        docEl.innerHTML = `
+          <div class="error">
+            <strong>Could not render this Markdown file.</strong><br>
+            Try opening the site through GitHub Pages or a local web server. Opening HTML directly from <code>file://</code> can block local <code>fetch()</code> requests in some browsers.
+          </div>
+        `;
+        stateEl.textContent = 'Render failed';
+      }
+    }
+
+    loadMarkdown(requestedFile);
+  </script>
+</body>
+</html>
